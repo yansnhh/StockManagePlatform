@@ -1,0 +1,13 @@
+{
+  "src": [
+    "pages/ProductListPage",
+    "pages/ProductCreatePage",
+    "pages/ProductDetailPage",
+    "pages/ProductEditPage",
+    "pages/SettingsPage",
+    "pages/TestPage",
+    "pages/CategoryUnitListPage",
+    "pages/CategoryUnitEditPage",
+    "pages/CategoryUnitCreatePage"
+  ]
+}
