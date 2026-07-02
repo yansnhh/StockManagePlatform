@@ -13,6 +13,7 @@ export class CategoryUnitService {
   }
 
   async save(data: CategoryUnit): Promise<void> {
+    console.info('[CategoryUnitService] save input:', JSON.stringify(data));
     data.categoryName = data.categoryName.trim();
 
     if (data.categoryName.length === 0) {
@@ -49,6 +50,7 @@ export class CategoryUnitService {
     } else {
       await this.repo.update(data);
     }
+    console.info('[CategoryUnitService] save after:', JSON.stringify(data));
   }
 
   async delete(id: string): Promise<void> {

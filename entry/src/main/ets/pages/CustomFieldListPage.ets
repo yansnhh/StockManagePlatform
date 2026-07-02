@@ -13,8 +13,9 @@ struct CustomFieldListPage {
   }
 
   async load() {
-    this.fields = await this.service.getAllFields();
+    this.fields = await this.service.getAll();
   }
+
 
   build() {
     Column() {

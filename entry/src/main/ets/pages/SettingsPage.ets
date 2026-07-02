@@ -6,11 +6,18 @@ struct SettingsPage {
 
   build() {
     Column() {
+      Row(){
+        Button('返回')
+          .height(34)
+          .onClick(() => {
+            router.back();
+          })
 
-      Text('设置中心')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .margin({ bottom: 20 })
+        Text('设置中心')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .margin({ bottom: 20 })
+      }
 
       // ===== 分类管理 =====
       this.item('分类管理', '管理商品分类与单位', () => {
@@ -20,25 +27,25 @@ struct SettingsPage {
       })
 
       // ===== 自定义字段 =====
-      this.item('自定义字段', '扩展商品属性字段', () => {
-        router.pushUrl({
-          url: 'pages/CustomFieldListPage'
-        });
-      })
+      // this.item('自定义字段', '扩展商品属性字段', () => {
+      //   router.pushUrl({
+      //     url: 'pages/CustomFieldListPage'
+      //   });
+      // })
 
       // ===== 导入导出 =====
-      this.item('导入导出', 'Excel导入导出库存数据', () => {
-        router.pushUrl({
-          url: 'pages/ImportExcelPage'
-        });
-      })
-
-      // ===== 系统信息 =====
-      this.item('系统信息', 'App版本与基础配置', () => {
-        router.pushUrl({
-          url: 'pages/Index'
-        });
-      })
+      // this.item('导入导出', 'Excel导入导出库存数据', () => {
+      //   router.pushUrl({
+      //     url: 'pages/ImportExcelPage'
+      //   });
+      // })
+      //
+      // // ===== 系统信息 =====
+      // this.item('系统信息', 'App版本与基础配置', () => {
+      //   router.pushUrl({
+      //     url: 'pages/Index'
+      //   });
+      // })
 
     }
     .width('100%')

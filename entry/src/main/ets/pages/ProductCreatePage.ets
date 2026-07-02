@@ -4,8 +4,6 @@ import { Product } from '../models/Product';
 import { CategoryUnit } from '../models/CategoryUnit';
 import { ProductService } from '../services/ProductService';
 import { CategoryUnitService } from '../services/CategoryUnitService';
-import { StockInputWithUnit } from '../components/StockInputWithUnit';
-import { EnumSelect } from '../components/EnumSelect';
 import { ImagePickerBox } from '../components/ImagePickerBox';
 
 @Entry
@@ -22,18 +20,27 @@ struct ProductCreatePage {
   @State units: string[] = [];
   @State stockText: string = '';
   @State stockUnit: string = '';
-  @State purchasePlatform: string = '';
-  @State shopName: string = '';
-  @State productLink: string = '';
-  @State orderNo: string = '';
-  @State purchaseDate: string = '';
-  @State isAccurateStockText: string = '是';
   @State costPriceText: string = '';
-  @State canRestockText: string = '否';
   @State remark: string = '';
 
   async aboutToAppear(): Promise<void> {
     await this.loadCategories();
+  }
+
+  showToast(message: string): void {
+    try {
+      promptAction.showToast({ message });
+    } catch (e) {
+      console.error('showToast failed:', e);
+    }
+  }
+
+  goBack(): void {
+    try {
+      router.back();
+    } catch (e) {
+      console.error('router back failed:', e);
+    }
   }
 
   async loadCategories(): Promise<void> {
@@ -44,7 +51,7 @@ struct ProductCreatePage {
         this.applyCategory(this.categories[0]);
       }
     } catch (e) {
-      promptAction.showToast({ message: '加载分类失败' });
+      this.showToast('加载分类失败');
       console.error('load categories failed:', e);
     }
   }
@@ -52,9 +59,50 @@ struct ProductCreatePage {
   applyCategory(category: CategoryUnit): void {
     this.categoryId = category.id;
     this.categoryName = category.categoryName;
-    this.units = category.unitOptions;
+    this.units = [...category.unitOptions];
     this.stockUnit = category.defaultUnit || (category.unitOptions.length > 0 ? category.unitOptions[0] : '');
   }
+
+  getCategoryOptions(): SelectOption[] {
+    const options: SelectOption[] = [];
+
+    for (let i = 0; i < this.categories.length; i++) {
+      options.push({ value: this.categories[i].categoryName });
+    }
+
+    return options;
+  }
+
+  getCategorySelectedIndex(): number {
+    for (let i = 0; i < this.categories.length; i++) {
+      if (this.categories[i].id === this.categoryId) {
+        return i;
+      }
+    }
+
+    return 0;
+  }
+
+  getUnitOptions(): SelectOption[] {
+    const options: SelectOption[] = [];
+
+    for (let i = 0; i < this.units.length; i++) {
+      options.push({ value: this.units[i] });
+    }
+
+    return options;
+  }
+
+  getUnitSelectedIndex(): number {
+    for (let i = 0; i < this.units.length; i++) {
+      if (this.units[i] === this.stockUnit) {
+        return i;
+      }
+    }
+
+    return 0;
+  }
+
   getRecommendedPrice(costPrice: number): number {
     if (costPrice <= 0) {
       return 0;
@@ -63,35 +111,18 @@ struct ProductCreatePage {
     return Number((costPrice * 1.3).toFixed(2));
   }
 
-  onCategoryChange(selectedName: string): void {
-    const category: CategoryUnit | undefined =
-      this.categories.find((item: CategoryUnit): boolean => item.categoryName === selectedName);
-
-    if (category !== undefined) {
-      this.applyCategory(category);
-    }
-  }
-
-
-  private buildProduct(): Product {
+  buildProduct(): Product {
     const product: Product = new Product();
 
     product.name = this.name.trim();
     product.imageUri = this.imageUri;
     product.categoryId = this.categoryId;
     product.categoryName = this.categoryName;
-    product.purchasePlatform = this.purchasePlatform.trim();
-    product.shopName = this.shopName.trim();
-    product.productLink = this.productLink.trim();
-    product.orderNo = this.orderNo.trim();
-    product.purchaseDate = this.purchaseDate.trim();
     product.stockQuantity = Number(this.stockText || '0');
     product.stockUnit = this.stockUnit;
     product.hasStockQuantity = this.stockText.trim().length > 0;
-    product.isAccurateStock = this.isAccurateStockText === '是';
     product.costPrice = Number(this.costPriceText || '0');
     product.recommendedPrice = this.getRecommendedPrice(product.costPrice);
-    product.canRestock = this.canRestockText === '是';
     product.remark = this.remark.trim();
 
     return product;
@@ -103,11 +134,11 @@ struct ProductCreatePage {
 
       await this.productService.insert(product);
 
-      promptAction.showToast({ message: '保存成功' });
-      router.back();
-    } catch (error) {
-      promptAction.showToast({ message: `${error}` });
-      console.error('save product failed:', error);
+      this.showToast('保存成功');
+      this.goBack();
+    } catch (e) {
+      this.showToast(`${e}`);
+      console.error('save product failed:', e);
     }
   }
 
@@ -116,125 +147,174 @@ struct ProductCreatePage {
       Row() {
         Button('返回')
           .height(36)
-          .onClick(() => router.back())
+          .onClick(() => this.goBack())
 
         Text('新增商品')
           .fontSize(22)
           .fontWeight(FontWeight.Bold)
           .margin({ left: 12 })
           .layoutWeight(1)
-
-        Button('保存')
-          .height(36)
-          .onClick(async () => {
-            await this.save();
-          })
       }
-      .padding(16)
+      .height(52)
       .width('100%')
+      .padding({ left: 16, right: 16, top: 6, bottom: 6 })
 
       Scroll() {
-        Column({ space: 14 }) {
-          ImagePickerBox({
-            imageUri: $imageUri,
-            onPickImage: () => {
-              try {
-                promptAction.showToast({ message: '图片选择待接入' });
-              } catch (e) {
-                console.error('show pick image toast failed:', e);
-              }
-            },
-            onTakePhoto: () => {
-              try {
-                promptAction.showToast({ message: '拍照待接入' });
-              } catch (e) {
-                console.error('show take photo toast failed:', e);
-              }
-            }
-          })
+        Column({ space: 12 }) {
+          Column() {
+            Text('商品图片')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
 
-          TextInput({ placeholder: '商品名称（必填）', text: this.name })
-            .onChange((value: string) => {
-              this.name = value;
+            ImagePickerBox({
+              imageUri: $imageUri,
+              onPickImage: () => {
+                this.showToast('图片选择待接入');
+              },
+              onTakePhoto: () => {
+                this.showToast('拍照待接入');
+              }
             })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
 
           Column() {
-            Text('商品分类')
-              .fontSize(14)
-              .fontColor('#666666')
-              .width('100%')
+            Text('商品名称 *')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
 
-            Flex({ wrap: FlexWrap.Wrap }) {
-              ForEach(this.categories, (item: CategoryUnit) => {
-                Text(item.categoryName)
-                  .fontSize(14)
-                  .padding(8)
-                  .margin(4)
-                  .backgroundColor(item.id === this.categoryId ? '#e6f4ff' : '#f2f3f5')
-                  .borderRadius(6)
-                  .onClick(() => {
-                    this.applyCategory(item);
-                  })
-              }, (item: CategoryUnit) => item.id)
+            TextInput({ placeholder: '请输入商品名称', text: this.name })
+              .height(48)
+              .onChange((value: string) => {
+                this.name = value;
+              })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+
+          Column() {
+            Text('商品分类 *')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            if (this.categories.length === 0) {
+              Text('暂无分类，请先创建分类')
+                .fontSize(14)
+                .fontColor('#999999')
+                .padding(12)
+            } else {
+              Select(this.getCategoryOptions())
+                .selected(this.getCategorySelectedIndex())
+                .value(this.categoryName)
+                .width('100%')
+                .height(48)
+                .onSelect((index: number) => {
+                  if (index >= 0 && index < this.categories.length) {
+                    this.applyCategory(this.categories[index]);
+                  }
+                })
             }
           }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
 
-          TextInput({ placeholder: '购买平台，例如淘宝、拼多多、1688', text: this.purchasePlatform })
-            .onChange((value: string) => {
-              this.purchasePlatform = value;
-            })
+          Column() {
+            Text('库存数量')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
 
-          TextInput({ placeholder: '店铺名称', text: this.shopName })
-            .onChange((value: string) => {
-              this.shopName = value;
-            })
+            Row() {
+              TextInput({ placeholder: '请输入库存数量', text: this.stockText })
+                .height(48)
+                .layoutWeight(1)
+                .type(InputType.Number)
+                .onChange((value: string) => {
+                  this.stockText = value;
+                })
 
-          TextInput({ placeholder: '商品链接', text: this.productLink })
-            .onChange((value: string) => {
-              this.productLink = value;
-            })
-
-          TextInput({ placeholder: '订单号', text: this.orderNo })
-            .onChange((value: string) => {
-              this.orderNo = value;
-            })
-
-          StockInputWithUnit({
-            stockText: $stockText,
-            stockUnit: $stockUnit,
-            units: this.units
-          })
-
-          Row() {
-            Text('是否精准库存').layoutWeight(1)
-            EnumSelect({ value: $isAccurateStockText, options: ['是', '否'] }).width(120)
+              if (this.units.length > 0) {
+                Select(this.getUnitOptions())
+                  .selected(this.getUnitSelectedIndex())
+                  .value(this.stockUnit)
+                  .width(120)
+                  .height(48)
+                  .margin({ left: 10 })
+                  .onSelect((index: number) => {
+                    if (index >= 0 && index < this.units.length) {
+                      this.stockUnit = this.units[index];
+                    }
+                  })
+              }
+            }
           }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
 
-          TextInput({ placeholder: '库存单价（必填）', text: this.costPriceText })
-            .type(InputType.Number)
-            .onChange((value: string) => {
-              this.costPriceText = value;
-            })
+          Column() {
+            Text('成本价 *')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
 
-          Text('推荐售价：' + this.getRecommendedPrice(Number(this.costPriceText || '0')).toString())
-            .fontSize(16)
-            .fontColor('#666666')
+            TextInput({ placeholder: '请输入成本价', text: this.costPriceText })
+              .height(48)
+              .type(InputType.Number)
+              .onChange((value: string) => {
+                this.costPriceText = value;
+              })
 
-          Row() {
-            Text('是否可继续进货').layoutWeight(1)
-            EnumSelect({ value: $canRestockText, options: ['是', '否'] }).width(120)
+            Text('建议价：' + this.getRecommendedPrice(Number(this.costPriceText || '0')).toString())
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ top: 8 })
           }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
 
-          TextArea({ placeholder: '备注', text: this.remark })
-            .height(96)
-            .onChange((value: string) => {
-              this.remark = value;
-            })
+          Column() {
+            Text('备注')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            TextArea({ placeholder: '请输入备注', text: this.remark })
+              .height(90)
+              .onChange((value: string) => {
+                this.remark = value;
+              })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
         }
-        .padding({ left: 16, right: 16, bottom: 24 })
-        .width('100%')
+        .padding({ left: 16, right: 16, top: 8, bottom: 16 })
       }
       .layoutWeight(1)
+
+      Button('保存')
+        .width('92%')
+        .height(52)
+        .fontSize(18)
+        .margin({ bottom: 20 })
+        .onClick(async () => {
+          await this.save();
+        })
     }
     .width('100%')
     .height('100%')

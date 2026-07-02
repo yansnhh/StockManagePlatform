@@ -10,23 +10,62 @@ struct CategoryUnitListPage {
 
   @State list: CategoryUnit[] = [];
   @State loading: boolean = false;
+  @State refreshVersion: number = 0;
 
   async aboutToAppear(): Promise<void> {
     await this.loadData();
   }
 
   async onPageShow(): Promise<void> {
+    console.info('[CategoryUnitList] onPageShow');
     await this.loadData();
+  }
+
+  showToast(message: string): void {
+    try {
+      promptAction.showToast({ message });
+    } catch (e) {
+      console.error('showToast failed:', e);
+    }
+  }
+
+  goCreate(): void {
+    try {
+      router.pushUrl({ url: 'pages/CategoryUnitCreatePage' });
+    } catch (e) {
+      console.error('go create failed:', e);
+    }
+  }
+
+  goEdit(id: string): void {
+    try {
+      router.pushUrl({
+        url: 'pages/CategoryUnitEditPage',
+        params: { id }
+      });
+    } catch (e) {
+      console.error('go edit failed:', e);
+    }
   }
 
   async loadData(): Promise<void> {
     this.loading = true;
 
     try {
-      this.list = await this.service.getAll();
+      console.info('[CategoryUnitList] loadData start');
+
+      const result: CategoryUnit[] = await this.service.getAll();
+
+      this.list = [];
+      this.list = [...result];
+
+      this.refreshVersion = this.refreshVersion + 1;
+
+      console.info('[CategoryUnitList] refreshVersion:', this.refreshVersion.toString());
+      console.info('[CategoryUnitList] list state updated:', JSON.stringify(this.list));
     } catch (e) {
-      promptAction.showToast({ message: '加载分类失败' });
-      console.error('load category unit failed:', e);
+      this.showToast('加载分类失败');
+      console.error('[CategoryUnitList] load failed:', e);
     }
 
     this.loading = false;
@@ -35,10 +74,10 @@ struct CategoryUnitListPage {
   async deleteItem(id: string): Promise<void> {
     try {
       await this.service.delete(id);
-      promptAction.showToast({ message: '删除成功' });
+      this.showToast('删除成功');
       await this.loadData();
     } catch (e) {
-      promptAction.showToast({ message: '删除失败' });
+      this.showToast('删除失败');
       console.error('delete category unit failed:', e);
     }
   }
@@ -46,6 +85,12 @@ struct CategoryUnitListPage {
   build() {
     Column() {
       Row() {
+        Button('返回')
+          .height(34)
+          .onClick(() => {
+            router.back();
+          })
+
         Text('分类管理')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
@@ -53,7 +98,7 @@ struct CategoryUnitListPage {
 
         Button('新增')
           .onClick(() => {
-            router.pushUrl({ url: 'pages/CategoryUnitCreatePage' });
+            this.goCreate();
           })
       }
       .width('100%')
@@ -72,6 +117,11 @@ struct CategoryUnitListPage {
           .margin({ top: 20 })
       }
 
+      Text(this.refreshVersion.toString())
+        .width(0)
+        .height(0)
+        .opacity(0)
+
       List() {
         ForEach(this.list, (item: CategoryUnit) => {
           ListItem() {
@@ -81,10 +131,6 @@ struct CategoryUnitListPage {
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
                   .layoutWeight(1)
-
-                Text(item.isEnabled ? '启用' : '禁用')
-                  .fontSize(12)
-                  .fontColor(item.isEnabled ? '#4CAF50' : '#999999')
               }
 
               Text('单位：' + item.unitOptions.join(' / '))
@@ -99,10 +145,7 @@ struct CategoryUnitListPage {
               Row() {
                 Button('编辑')
                   .onClick(() => {
-                    router.pushUrl({
-                      url: 'pages/CategoryUnitEditPage',
-                      params: { id: item.id }
-                    });
+                    this.goEdit(item.id);
                   })
 
                 Button('删除')
@@ -117,8 +160,9 @@ struct CategoryUnitListPage {
             .padding(12)
             .width('100%')
           }
-        }, (item: CategoryUnit) => item.id)
+        }, (item: CategoryUnit) => item.id + '_' + item.updatedAt + '_' + this.refreshVersion.toString())
       }
+      .width('100%')
       .layoutWeight(1)
     }
     .width('100%')

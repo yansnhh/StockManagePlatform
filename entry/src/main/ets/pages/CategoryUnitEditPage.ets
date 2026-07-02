@@ -13,21 +13,44 @@ struct CategoryUnitEditPage {
   @State categoryId: string = '';
 
   async aboutToAppear(): Promise<void> {
-    const params: Object = router.getParams();
-    const temp: Record<string, Object> = params as Record<string, Object>;
-    const value: Object | undefined = temp['id'];
+    try {
+      const params: Object = router.getParams();
+      const temp: Record<string, Object> = params as Record<string, Object>;
+      const value: Object | undefined = temp['id'];
 
-    if (value === undefined) {
-      promptAction.showToast({ message: '缺少分类ID' });
-      return;
+      if (value === undefined) {
+        this.showToast('缺少分类ID');
+        return;
+      }
+
+      this.categoryId = value as string;
+
+      const data: CategoryUnit | undefined = await this.service.getById(this.categoryId);
+
+      if (data !== undefined) {
+        this.model = data;
+      } else {
+        this.showToast('分类不存在');
+      }
+    } catch (e) {
+      this.showToast('加载分类失败');
+      console.error('load category failed:', e);
     }
+  }
 
-    this.categoryId = value as string;
+  showToast(message: string): void {
+    try {
+      promptAction.showToast({ message });
+    } catch (e) {
+      console.error('showToast failed:', e);
+    }
+  }
 
-    const data: CategoryUnit | undefined = await this.service.getById(this.categoryId);
-
-    if (data !== undefined) {
-      this.model = data;
+  goBack(): void {
+    try {
+      router.back();
+    } catch (e) {
+      console.error('router.back failed:', e);
     }
   }
 
@@ -35,11 +58,12 @@ struct CategoryUnitEditPage {
     const value: string = this.unitInput.trim();
 
     if (value.length === 0) {
+      this.showToast('请输入单位名称');
       return;
     }
 
     if (this.model.unitOptions.indexOf(value) !== -1) {
-      promptAction.showToast({ message: '单位已存在' });
+      this.showToast('单位已存在');
       return;
     }
 
@@ -52,108 +76,187 @@ struct CategoryUnitEditPage {
     this.unitInput = '';
   }
 
-  removeUnit(index: number): void {
-    const list: string[] = [...this.model.unitOptions];
-    const removed: string[] = list.splice(index, 1);
-
+  removeUnit(unit: string): void {
+    const list: string[] = this.model.unitOptions.filter((item: string): boolean => item !== unit);
     this.model.unitOptions = list;
 
-    if (removed.length > 0 && removed[0] === this.model.defaultUnit) {
+    if (this.model.defaultUnit === unit) {
       this.model.defaultUnit = list.length > 0 ? list[0] : '';
     }
   }
 
+  setDefaultUnit(unit: string): void {
+    this.model.defaultUnit = unit;
+  }
+
   async save(): Promise<void> {
     try {
+      console.info('[ProductEdit] before update:', JSON.stringify(this.model));
+
       await this.service.save(this.model);
-      promptAction.showToast({ message: '保存成功' });
-      router.back();
+
+      console.info('[ProductEdit] update success:', this.model.id);
+
+      this.showToast('保存成功');
+      this.goBack();
     } catch (e) {
-      promptAction.showToast({ message: `${e}` });
-      console.error('update category unit failed:', e);
+      this.showToast(`${e}`);
+      console.error('[ProductEdit] update failed:', e);
     }
   }
 
   build() {
     Column() {
-      Text('分类编辑')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .margin({ bottom: 20 })
-
-      TextInput({
-        placeholder: '分类名称',
-        text: this.model.categoryName
-      })
-        .onChange((v: string) => {
-          this.model.categoryName = v;
-        })
-
       Row() {
-        TextInput({
-          placeholder: '新增单位',
-          text: this.unitInput
-        })
+        Button('返回')
+          .height(36)
+          .onClick(() => this.goBack())
+
+        Text('编辑分类')
+          .fontSize(22)
+          .fontWeight(FontWeight.Bold)
+          .margin({ left: 12 })
           .layoutWeight(1)
-          .onChange((v: string) => {
-            this.unitInput = v;
-          })
-
-        Button('添加')
-          .margin({ left: 8 })
-          .onClick(() => {
-            this.addUnit();
-          })
       }
-      .margin({ top: 12 })
+      .height(48)
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 2, bottom: 6 })
 
-      Flex({ wrap: FlexWrap.Wrap }) {
-        ForEach(this.model.unitOptions, (unit: string, index: number) => {
-          Row() {
-            Text(unit)
-              .fontSize(14)
+      Scroll() {
+        Column({ space: 12 }) {
+          Column() {
+            Text('分类名称')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
 
-            Text(' ×')
-              .fontSize(14)
-              .fontColor('#ff4d4f')
-              .onClick(() => this.removeUnit(index))
+            TextInput({
+              placeholder: '请输入分类名称',
+              text: this.model.categoryName
+            })
+              .height(48)
+              .onChange((value: string) => {
+                this.model.categoryName = value;
+              })
           }
-          .padding(6)
-          .margin(4)
-          .backgroundColor(unit === this.model.defaultUnit ? '#e6f4ff' : '#f2f3f5')
-          .borderRadius(6)
-          .onClick(() => {
-            this.model.defaultUnit = unit;
-          })
-        }, (unit: string) => unit)
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+
+          Column() {
+            Text('单位')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            Row() {
+              TextInput({
+                placeholder: '请输入单位，例如：个、箱、瓶',
+                text: this.unitInput
+              })
+                .height(48)
+                .layoutWeight(1)
+                .onChange((value: string) => {
+                  this.unitInput = value;
+                })
+
+              Button('添加')
+                .height(48)
+                .margin({ left: 10 })
+                .onClick(() => this.addUnit())
+            }
+
+            Text('已添加单位')
+              .fontSize(14)
+              .fontWeight(FontWeight.Medium)
+              .margin({ top: 16, bottom: 8 })
+
+            if (this.model.unitOptions.length === 0) {
+              Text('暂无单位，请先添加')
+                .fontSize(13)
+                .fontColor('#999999')
+            } else {
+              Flex({ wrap: FlexWrap.Wrap }) {
+                ForEach(this.model.unitOptions, (unit: string) => {
+                  Row() {
+                    Text(unit)
+                      .fontSize(14)
+
+                    Text(' ×')
+                      .fontSize(14)
+                      .fontColor('#ff4d4f')
+                      .margin({ left: 6 })
+                      .onClick(() => {
+                        this.removeUnit(unit);
+                      })
+                  }
+                  .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+                  .margin({ right: 8, bottom: 8 })
+                  .backgroundColor('#F2F3F5')
+                  .borderRadius(18)
+                }, (unit: string) => unit)
+              }
+            }
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+
+          Column() {
+            Text('默认单位')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            if (this.model.unitOptions.length === 0) {
+              Text('请先添加单位')
+                .fontSize(14)
+                .fontColor('#999999')
+                .padding(12)
+            } else {
+              Flex({ wrap: FlexWrap.Wrap }) {
+                ForEach(this.model.unitOptions, (unit: string) => {
+                  Text(unit === this.model.defaultUnit ? unit + '  ✓' : unit)
+                    .fontSize(14)
+                    .fontColor(unit === this.model.defaultUnit ? '#0A59F7' : '#333333')
+                    .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+                    .margin({ right: 8, bottom: 8 })
+                    .backgroundColor(unit === this.model.defaultUnit ? '#E6F0FF' : '#F2F3F5')
+                    .borderRadius(18)
+                    .onClick(() => {
+                      this.setDefaultUnit(unit);
+                    })
+                }, (unit: string) => unit)
+              }
+            }
+
+            Text('创建商品时会自动选中该默认单位')
+              .fontSize(12)
+              .fontColor('#888888')
+              .margin({ top: 6 })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+        }
+        .padding({ left: 16, right: 16, top: 8, bottom: 16 })
       }
-      .margin({ top: 12 })
-
-      Text('默认单位：' + (this.model.defaultUnit || '暂无'))
-        .fontSize(14)
-        .fontColor('#666666')
-        .margin({ top: 12 })
-
-      Row() {
-        Text('启用')
-          .layoutWeight(1)
-
-        Toggle({ type: ToggleType.Switch, isOn: this.model.isEnabled })
-          .onChange((v: boolean) => {
-            this.model.isEnabled = v;
-          })
-      }
-      .margin({ top: 16 })
+      .layoutWeight(1)
 
       Button('保存')
-        .width('100%')
-        .margin({ top: 24 })
+        .width('92%')
+        .height(52)
+        .fontSize(18)
+        .margin({ bottom: 20 })
         .onClick(async () => {
           await this.save();
         })
     }
-    .padding(16)
     .width('100%')
     .height('100%')
+    .backgroundColor('#F7F8FA')
   }
 }

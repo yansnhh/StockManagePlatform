@@ -7,15 +7,22 @@ export class ProductRepository {
   private db = DatabaseManager.getStore();
 
   async insert(data: Product): Promise<void> {
-
-    const sql =
-      `INSERT INTO product
-      (id, name, image_uri, category_id, category_name,
-       purchase_platform, shop_name, product_link, order_no,
-       purchase_date, stock_quantity, stock_unit,
-       is_accurate_stock, cost_price, recommended_price,
-       can_restock, remark, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = `
+    INSERT INTO product (
+      id,
+      name,
+      image_uri,
+      category_id,
+      category_name,
+      stock_quantity,
+      stock_unit,
+      cost_price,
+      recommended_price,
+      remark,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
 
     const args: relationalStore.ValueType[] = [
       data.id,
@@ -23,17 +30,10 @@ export class ProductRepository {
       data.imageUri,
       data.categoryId,
       data.categoryName,
-      data.purchasePlatform,
-      data.shopName,
-      data.productLink,
-      data.orderNo,
-      data.purchaseDate,
       data.stockQuantity,
       data.stockUnit,
-      data.isAccurateStock,
       data.costPrice,
       data.recommendedPrice,
-      data.canRestock,
       data.remark,
       data.createdAt,
       data.updatedAt
@@ -43,44 +43,30 @@ export class ProductRepository {
   }
 
   async update(data: Product): Promise<void> {
-
-    const sql =
-      `UPDATE product SET
-        name = ?,
-        image_uri = ?,
-        category_id = ?,
-        category_name = ?,
-        purchase_platform = ?,
-        shop_name = ?,
-        product_link = ?,
-        order_no = ?,
-        purchase_date = ?,
-        stock_quantity = ?,
-        stock_unit = ?,
-        is_accurate_stock = ?,
-        cost_price = ?,
-        recommended_price = ?,
-        can_restock = ?,
-        remark = ?,
-        updated_at = ?
-      WHERE id = ?`;
+    const sql = `
+    UPDATE product SET
+      name = ?,
+      image_uri = ?,
+      category_id = ?,
+      category_name = ?,
+      stock_quantity = ?,
+      stock_unit = ?,
+      cost_price = ?,
+      recommended_price = ?,
+      remark = ?,
+      updated_at = ?
+    WHERE id = ?
+  `;
 
     const args: relationalStore.ValueType[] = [
       data.name,
       data.imageUri,
       data.categoryId,
       data.categoryName,
-      data.purchasePlatform,
-      data.shopName,
-      data.productLink,
-      data.orderNo,
-      data.purchaseDate,
       data.stockQuantity,
       data.stockUnit,
-      data.isAccurateStock,
       data.costPrice,
       data.recommendedPrice,
-      data.canRestock,
       data.remark,
       data.updatedAt,
       data.id
