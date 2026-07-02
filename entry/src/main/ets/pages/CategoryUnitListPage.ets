@@ -1,14 +1,14 @@
 import router from '@ohos.router';
+import promptAction from '@ohos.promptAction';
 import { CategoryUnitService } from '../services/CategoryUnitService';
 import { CategoryUnit } from '../models/CategoryUnit';
 
 @Entry
 @Component
 struct CategoryUnitListPage {
-
   private service: CategoryUnitService = new CategoryUnitService();
 
-  @State list: Array<CategoryUnit> = new Array<CategoryUnit>();
+  @State list: CategoryUnit[] = [];
   @State loading: boolean = false;
 
   async aboutToAppear(): Promise<void> {
@@ -17,14 +17,30 @@ struct CategoryUnitListPage {
 
   async loadData(): Promise<void> {
     this.loading = true;
-    this.list = await this.service.getAll();
+
+    try {
+      this.list = await this.service.getAll();
+    } catch (e) {
+      promptAction.showToast({ message: '加载分类失败' });
+      console.error('load category unit failed:', e);
+    }
+
     this.loading = false;
+  }
+
+  async deleteItem(id: string): Promise<void> {
+    try {
+      await this.service.delete(id);
+      promptAction.showToast({ message: '删除成功' });
+      await this.loadData();
+    } catch (e) {
+      promptAction.showToast({ message: '删除失败' });
+      console.error('delete category unit failed:', e);
+    }
   }
 
   build() {
     Column() {
-
-      // ===== 顶部 =====
       Row() {
         Text('分类管理')
           .fontSize(20)
@@ -33,36 +49,29 @@ struct CategoryUnitListPage {
 
         Button('新增')
           .onClick(() => {
-            router.pushUrl({
-              url: 'pages/CategoryUnitCreatePage'
-            });
+            router.pushUrl({ url: 'pages/CategoryUnitCreatePage' });
           })
       }
       .width('100%')
       .padding(12)
 
-      // ===== loading =====
       if (this.loading) {
         Text('加载中...')
           .fontSize(14)
-          .fontColor('#888')
+          .fontColor('#888888')
       }
 
-      // ===== 空状态 =====
       if (!this.loading && this.list.length === 0) {
         Text('暂无分类数据')
           .fontSize(14)
-          .fontColor('#999')
+          .fontColor('#999999')
           .margin({ top: 20 })
       }
 
-      // ===== 列表 =====
       List() {
         ForEach(this.list, (item: CategoryUnit) => {
           ListItem() {
             Column() {
-
-              // 标题行
               Row() {
                 Text(item.categoryName)
                   .fontSize(16)
@@ -71,21 +80,18 @@ struct CategoryUnitListPage {
 
                 Text(item.isEnabled ? '启用' : '禁用')
                   .fontSize(12)
-                  .fontColor(item.isEnabled ? '#4CAF50' : '#999')
+                  .fontColor(item.isEnabled ? '#4CAF50' : '#999999')
               }
 
-              // 单位
-              Text('单位: ' + item.unitOptions.join(' / '))
+              Text('单位：' + item.unitOptions.join(' / '))
                 .fontSize(12)
-                .fontColor('#666')
+                .fontColor('#666666')
                 .margin({ top: 4 })
 
-              // 默认单位
-              Text('默认: ' + item.defaultUnit)
+              Text('默认：' + item.defaultUnit)
                 .fontSize(12)
-                .fontColor('#666')
+                .fontColor('#666666')
 
-              // 操作区
               Row() {
                 Button('编辑')
                   .onClick(() => {
@@ -99,12 +105,10 @@ struct CategoryUnitListPage {
                   .margin({ left: 10 })
                   .backgroundColor('#ff4d4f')
                   .onClick(async () => {
-                    await this.service.delete(item.id);
-                    await this.loadData();
+                    await this.deleteItem(item.id);
                   })
               }
               .margin({ top: 8 })
-
             }
             .padding(12)
             .width('100%')
@@ -112,7 +116,6 @@ struct CategoryUnitListPage {
         }, (item: CategoryUnit) => item.id)
       }
       .layoutWeight(1)
-
     }
     .width('100%')
     .height('100%')

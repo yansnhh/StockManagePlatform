@@ -1,10 +1,8 @@
 import { CategoryUnitRepository } from '../repositories/CategoryUnitRepository';
 import { CategoryUnit } from '../models/CategoryUnit';
-import { DbConvertUtil } from '../utils/DbConvertUtil';
 
 export class CategoryUnitService {
-
-  private repo = new CategoryUnitRepository();
+  private repo: CategoryUnitRepository = new CategoryUnitRepository();
 
   async getAll(): Promise<CategoryUnit[]> {
     return await this.repo.getAll();
@@ -15,33 +13,38 @@ export class CategoryUnitService {
   }
 
   async save(data: CategoryUnit): Promise<void> {
+    data.categoryName = data.categoryName.trim();
 
-    // 🧠 统一业务规则
-
-    if (!data.categoryName || data.categoryName.trim().length === 0) {
+    if (data.categoryName.length === 0) {
       throw new Error('分类名称不能为空');
     }
 
-    if (!data.unitOptions || data.unitOptions.length === 0) {
+    data.unitOptions = data.unitOptions
+      .map((item: string): string => item.trim())
+      .filter((item: string): boolean => item.length > 0);
+
+    data.unitOptions = Array.from(new Set(data.unitOptions));
+
+    if (data.unitOptions.length === 0) {
       throw new Error('至少需要一个单位');
     }
 
-    if (!data.defaultUnit) {
+    if (!data.defaultUnit || data.unitOptions.indexOf(data.defaultUnit) === -1) {
       data.defaultUnit = data.unitOptions[0];
     }
 
-    // 🧠 默认启用逻辑
     data.isEnabled = data.isEnabled ?? true;
 
-    // 🧠 时间统一处理
-    const now = new Date().toISOString();
+    const now: string = new Date().toISOString();
+
     if (!data.createdAt) {
       data.createdAt = now;
     }
+
     data.updatedAt = now;
 
     if (!data.id) {
-      data.id = 'cat_' + Date.now();
+      data.id = 'cat_' + Date.now().toString();
       await this.repo.insert(data);
     } else {
       await this.repo.update(data);
