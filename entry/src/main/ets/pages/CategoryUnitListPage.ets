@@ -15,6 +15,10 @@ struct CategoryUnitListPage {
     await this.loadData();
   }
 
+  async onPageShow(): Promise<void> {
+    await this.loadData();
+  }
+
   async loadData(): Promise<void> {
     this.loading = true;
 
