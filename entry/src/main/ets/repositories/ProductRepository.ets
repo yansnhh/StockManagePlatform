@@ -84,9 +84,11 @@ export class ProductRepository {
   }
 
   async getById(id: string): Promise<Product | undefined> {
-
     const result = await this.db.querySql(
-      `SELECT * FROM product WHERE id = ?`,
+      `SELECT id, name, image_uri, category_id, category_name,
+            stock_quantity, stock_unit, cost_price, recommended_price,
+            remark, created_at, updated_at
+     FROM product WHERE id = ?`,
       [id]
     );
 
@@ -97,32 +99,28 @@ export class ProductRepository {
     result.goToFirstRow();
 
     const item = new Product();
-
     item.id = result.getString(0) ?? '';
     item.name = result.getString(1) ?? '';
     item.imageUri = result.getString(2) ?? '';
     item.categoryId = result.getString(3) ?? '';
     item.categoryName = result.getString(4) ?? '';
-    item.purchasePlatform = result.getString(5) ?? '';
-    item.shopName = result.getString(6) ?? '';
-    item.productLink = result.getString(7) ?? '';
-    item.orderNo = result.getString(8) ?? '';
-    item.purchaseDate = result.getString(9) ?? '';
-    item.stockQuantity = result.getDouble(10) ?? 0;
-    item.stockUnit = result.getString(11) ?? '';
-    item.isAccurateStock = Boolean(result.getLong(12) ?? 1);
-    item.costPrice = result.getDouble(13) ?? 0;
-    item.recommendedPrice = result.getDouble(14) ?? 0;
-    item.canRestock = Boolean(result.getLong(15) ?? 0);
-    item.remark = result.getString(16) ?? '';
+    item.stockQuantity = result.getDouble(5) ?? 0;
+    item.stockUnit = result.getString(6) ?? '';
+    item.costPrice = result.getDouble(7) ?? 0;
+    item.recommendedPrice = result.getDouble(8) ?? 0;
+    item.remark = result.getString(9) ?? '';
+    item.createdAt = result.getString(10) ?? '';
+    item.updatedAt = result.getString(11) ?? '';
 
     return item;
   }
 
   async getAll(): Promise<Product[]> {
-
     const result = await this.db.querySql(
-      `SELECT * FROM product ORDER BY created_at DESC`,
+      `SELECT id, name, image_uri, category_id, category_name,
+            stock_quantity, stock_unit, cost_price, recommended_price,
+            remark, created_at, updated_at
+     FROM product ORDER BY created_at DESC`,
       []
     );
 
@@ -135,7 +133,6 @@ export class ProductRepository {
     result.goToFirstRow();
 
     for (let i = 0; i < result.rowCount; i++) {
-
       const item = new Product();
 
       item.id = result.getString(0) ?? '';
@@ -143,29 +140,19 @@ export class ProductRepository {
       item.imageUri = result.getString(2) ?? '';
       item.categoryId = result.getString(3) ?? '';
       item.categoryName = result.getString(4) ?? '';
-      item.purchasePlatform = result.getString(5) ?? '';
-      item.shopName = result.getString(6) ?? '';
-      item.productLink = result.getString(7) ?? '';
-      item.orderNo = result.getString(8) ?? '';
-      item.purchaseDate = result.getString(9) ?? '';
-      item.stockQuantity = result.getDouble(10) ?? 0;
-      item.stockUnit = result.getString(11) ?? '';
-
-      // bool（RDB → boolean）
-      item.isAccurateStock = result.getLong(12) === 1;
-      item.costPrice = result.getDouble(13) ?? 0;
-      item.recommendedPrice = result.getDouble(14) ?? 0;
-      item.canRestock = result.getLong(15) === 1;
-
-      item.remark = result.getString(16) ?? '';
-      item.createdAt = result.getString(17) ?? '';
-      item.updatedAt = result.getString(18) ?? '';
+      item.stockQuantity = result.getDouble(5) ?? 0;
+      item.stockUnit = result.getString(6) ?? '';
+      item.costPrice = result.getDouble(7) ?? 0;
+      item.recommendedPrice = result.getDouble(8) ?? 0;
+      item.remark = result.getString(9) ?? '';
+      item.createdAt = result.getString(10) ?? '';
+      item.updatedAt = result.getString(11) ?? '';
 
       list.push(item);
-
       result.goToNextRow();
     }
 
     return list;
   }
+
 }
