@@ -109,7 +109,7 @@ struct ProductCreatePage {
       return 0;
     }
 
-    return Number((costPrice * 1.3).toFixed(2));
+    return Number((costPrice * 5).toFixed(2));
   }
 
   buildProduct(): Product {
