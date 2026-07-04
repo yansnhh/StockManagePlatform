@@ -50,7 +50,7 @@ struct ProductListPage {
 
   goSettings(): void {
     try {
-      router.pushUrl({ url: 'pages/CategoryUnitListPage' });
+      router.pushUrl({ url: 'pages/SettingsPage' });
     } catch (e) {
       console.error('go settings failed:', e);
     }

@@ -34,18 +34,15 @@ struct SettingsPage {
       // })
 
       // ===== 导入导出 =====
-      // this.item('导入导出', 'Excel导入导出库存数据', () => {
-      //   router.pushUrl({
-      //     url: 'pages/ImportExcelPage'
-      //   });
-      // })
-      //
-      // // ===== 系统信息 =====
-      // this.item('系统信息', 'App版本与基础配置', () => {
-      //   router.pushUrl({
-      //     url: 'pages/Index'
-      //   });
-      // })
+      this.item('导入导出', 'JSON备份与恢复库存数据', () => {
+        try {
+          router.pushUrl({
+            url: 'pages/DataManagePage'
+          });
+        } catch (e) {
+          console.error('go data manage failed:', e);
+        }
+      })
 
     }
     .width('100%')

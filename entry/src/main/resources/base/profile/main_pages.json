@@ -8,6 +8,7 @@
     "pages/TestPage",
     "pages/CategoryUnitListPage",
     "pages/CategoryUnitEditPage",
-    "pages/CategoryUnitCreatePage"
+    "pages/CategoryUnitCreatePage",
+    "pages/DataManagePage"
   ]
 }
