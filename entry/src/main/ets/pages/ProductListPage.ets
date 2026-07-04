@@ -141,12 +141,6 @@ struct ProductListPage {
             this.searchText = value;
           })
 
-        Button('搜索')
-          .height(48)
-          .margin({ left: 12 })
-          .onClick(() => {
-            this.refreshVersion = this.refreshVersion + 1;
-          })
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 12 })

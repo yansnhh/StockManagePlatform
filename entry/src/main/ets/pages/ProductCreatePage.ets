@@ -5,6 +5,7 @@ import { CategoryUnit } from '../models/CategoryUnit';
 import { ProductService } from '../services/ProductService';
 import { CategoryUnitService } from '../services/CategoryUnitService';
 import { ImagePickerBox } from '../components/ImagePickerBox';
+import photoAccessHelper from '@ohos.file.photoAccessHelper';
 
 @Entry
 @Component
@@ -142,6 +143,25 @@ struct ProductCreatePage {
     }
   }
 
+  async pickImage(): Promise<void> {
+    try {
+      const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
+      photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+      photoSelectOptions.maxSelectNumber = 1;
+
+      const photoPicker = new photoAccessHelper.PhotoViewPicker();
+      const result = await photoPicker.select(photoSelectOptions);
+
+      if (result.photoUris.length > 0) {
+        this.imageUri = result.photoUris[0];
+        console.info('[ProductCreate] pick image uri=' + this.imageUri);
+      }
+    } catch (e) {
+      this.showToast('选择图片失败');
+      console.error('[ProductCreate] pick image failed:', e);
+    }
+  }
+
   build() {
     Column() {
       Row() {
@@ -169,11 +189,8 @@ struct ProductCreatePage {
 
             ImagePickerBox({
               imageUri: $imageUri,
-              onPickImage: () => {
-                this.showToast('图片选择待接入');
-              },
-              onTakePhoto: () => {
-                this.showToast('拍照待接入');
+              onPickImage: async () => {
+                await this.pickImage();
               }
             })
           }
