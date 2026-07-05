@@ -26,7 +26,7 @@ struct SettingsPage {
         });
       })
 
-      // ===== 自定义字段 =====
+      // // ===== 自定义字段 =====
       // this.item('自定义字段', '扩展商品属性字段', () => {
       //   router.pushUrl({
       //     url: 'pages/CustomFieldListPage'

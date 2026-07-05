@@ -13,15 +13,17 @@ struct ProductCreatePage {
   private productService: ProductService = new ProductService();
   private categoryService: CategoryUnitService = new CategoryUnitService();
 
-  @State categories: CategoryUnit[] = [];
   @State imageUri: string = '';
   @State name: string = '';
+  @State categories: CategoryUnit[] = [];
   @State categoryId: string = '';
   @State categoryName: string = '';
+  @State purchasePlatform: string = '';
+  @State shopName: string = '';
   @State units: string[] = [];
   @State stockText: string = '';
   @State stockUnit: string = '';
-  @State costPriceText: string = '';
+  @State unitPriceText: string = '';
   @State remark: string = '';
 
   async aboutToAppear(): Promise<void> {
@@ -104,6 +106,14 @@ struct ProductCreatePage {
     return 0;
   }
 
+  getTotalPrice(costPrice: number, stock: number): number {
+    if (costPrice <= 0 || stock <= 0) {
+      return 0;
+    }
+
+    return costPrice * stock;
+  }
+
   getRecommendedPrice(costPrice: number): number {
     if (costPrice <= 0) {
       return 0;
@@ -119,10 +129,12 @@ struct ProductCreatePage {
     product.imageUri = this.imageUri;
     product.categoryId = this.categoryId;
     product.categoryName = this.categoryName;
+    product.purchasePlatform = this.purchasePlatform;
+    product.shopName = this.shopName;
     product.stockQuantity = Number(this.stockText || '0');
     product.stockUnit = this.stockUnit;
     product.hasStockQuantity = this.stockText.trim().length > 0;
-    product.costPrice = Number(this.costPriceText || '0');
+    product.costPrice = Number(this.unitPriceText || '0');
     product.recommendedPrice = this.getRecommendedPrice(product.costPrice);
     product.remark = this.remark.trim();
 
@@ -281,22 +293,28 @@ struct ProductCreatePage {
           .borderRadius(16)
 
           Column() {
-            Text('成本价 *')
+            Text('成本单价 *')
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
               .margin({ bottom: 8 })
 
-            TextInput({ placeholder: '请输入成本价', text: this.costPriceText })
+            TextInput({ placeholder: '请输入成本单价', text: this.unitPriceText })
               .height(48)
               .type(InputType.Number)
               .onChange((value: string) => {
-                this.costPriceText = value;
+                this.unitPriceText = value;
               })
 
-            Text('建议价：' + this.getRecommendedPrice(Number(this.costPriceText || '0')).toString())
+            Text('建议单价：' + this.getRecommendedPrice(Number(this.unitPriceText || '0')).toString())
               .fontSize(14)
               .fontColor('#666666')
               .margin({ top: 8 })
+
+            Text('成本总价：' + this.getTotalPrice(Number(this.unitPriceText || '0'),Number(this.unitPriceText || '0')))
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ top: 8 })
+
           }
           .width('100%')
           .padding(16)
@@ -319,6 +337,41 @@ struct ProductCreatePage {
           .padding(16)
           .backgroundColor(Color.White)
           .borderRadius(16)
+
+          Column() {
+            Text('购入平台')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            TextArea({ placeholder: '请输入购入来源', text: this.purchasePlatform })
+              .height(90)
+              .onChange((value: string) => {
+                this.purchasePlatform = value;
+              })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+
+          Column() {
+            Text('店铺名称')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            TextArea({ placeholder: '请输入店铺名称', text: this.shopName })
+              .height(90)
+              .onChange((value: string) => {
+                this.shopName = value;
+              })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+
         }
         .padding({ left: 16, right: 16, top: 8, bottom: 16 })
       }

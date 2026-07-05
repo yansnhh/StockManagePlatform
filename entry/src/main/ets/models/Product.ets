@@ -20,6 +20,7 @@ export class Product {
 
   costPrice: number = 0;
   recommendedPrice: number = 0;
+  totalPrice: number = 0;
 
   canRestock: boolean = false;
 

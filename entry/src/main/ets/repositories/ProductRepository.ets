@@ -14,14 +14,17 @@ export class ProductRepository {
       image_uri,
       category_id,
       category_name,
+      purchase_platform,
+      shop_name,
       stock_quantity,
       stock_unit,
       cost_price,
       recommended_price,
+      total_price,
       remark,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
     const args: relationalStore.ValueType[] = [
@@ -30,10 +33,13 @@ export class ProductRepository {
       data.imageUri,
       data.categoryId,
       data.categoryName,
+      data.purchasePlatform,
+      data.shopName,
       data.stockQuantity,
       data.stockUnit,
       data.costPrice,
       data.recommendedPrice,
+      data.totalPrice,
       data.remark,
       data.createdAt,
       data.updatedAt

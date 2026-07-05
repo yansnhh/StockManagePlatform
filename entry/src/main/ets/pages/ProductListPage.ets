@@ -211,7 +211,7 @@ struct ProductListPage {
                   .fontColor('#666666')
                   .margin({ top: 2 })
 
-                Text('成本价：' + item.costPrice.toString())
+                Text('成本总价：' + (item.costPrice*item.stockQuantity).toString())
                   .fontSize(13)
                   .fontColor('#666666')
                   .margin({ top: 2 })

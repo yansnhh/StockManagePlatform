@@ -21,7 +21,7 @@ struct ProductEditPage {
   @State units: string[] = [];
   @State stockText: string = '';
   @State stockUnit: string = '';
-  @State costPriceText: string = '';
+  @State unitPriceText: string = '';
   @State remark: string = '';
   @State createdAt: string = '';
   @State refreshVersion: number = 0;
@@ -90,7 +90,7 @@ struct ProductEditPage {
     this.categoryName = product.categoryName;
     this.stockText = product.stockQuantity.toString();
     this.stockUnit = product.stockUnit;
-    this.costPriceText = product.costPrice.toString();
+    this.unitPriceText = product.costPrice.toString();
     this.remark = product.remark;
     this.createdAt = product.createdAt;
 
@@ -167,7 +167,15 @@ struct ProductEditPage {
       return 0;
     }
 
-    return Number((costPrice * 1.3).toFixed(2));
+    return Number((costPrice * 5).toFixed(2));
+  }
+
+  getTotalPrice(costPrice: number, stock: number): number {
+    if (costPrice <= 0 || stock <= 0) {
+      return 0;
+    }
+
+    return costPrice * stock;
   }
 
   buildProduct(): Product {
@@ -181,7 +189,7 @@ struct ProductEditPage {
     product.stockQuantity = Number(this.stockText || '0');
     product.stockUnit = this.stockUnit;
     product.hasStockQuantity = this.stockText.trim().length > 0;
-    product.costPrice = Number(this.costPriceText || '0');
+    product.costPrice = Number(this.unitPriceText || '0');
     product.recommendedPrice = this.getRecommendedPrice(product.costPrice);
     product.remark = this.remark.trim();
     product.createdAt = this.createdAt;
@@ -330,22 +338,28 @@ struct ProductEditPage {
           .borderRadius(16)
 
           Column() {
-            Text('成本价 *')
+            Text('成本单价 *')
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
               .margin({ bottom: 8 })
 
-            TextInput({ placeholder: '请输入成本价', text: this.costPriceText })
+            TextInput({ placeholder: '请输入成本单价', text: this.unitPriceText })
               .height(48)
               .type(InputType.Number)
               .onChange((value: string) => {
-                this.costPriceText = value;
+                this.unitPriceText = value;
               })
 
-            Text('建议价：' + this.getRecommendedPrice(Number(this.costPriceText || '0')).toString())
+            Text('建议单价：' + this.getRecommendedPrice(Number(this.unitPriceText || '0')).toString())
               .fontSize(14)
               .fontColor('#666666')
               .margin({ top: 8 })
+
+            Text('成本总价：' + this.getTotalPrice(Number(this.unitPriceText || '0'),Number(this.unitPriceText || '0')))
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ top: 8 })
+
           }
           .width('100%')
           .padding(16)
