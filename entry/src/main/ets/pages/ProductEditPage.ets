@@ -5,6 +5,8 @@ import { CategoryUnit } from '../models/CategoryUnit';
 import { ProductService } from '../services/ProductService';
 import { CategoryUnitService } from '../services/CategoryUnitService';
 import { ImagePickerBox } from '../components/ImagePickerBox';
+import photoAccessHelper from '@ohos.file.photoAccessHelper';
+
 
 @Entry
 @Component
@@ -22,9 +24,12 @@ struct ProductEditPage {
   @State stockText: string = '';
   @State stockUnit: string = '';
   @State unitPriceText: string = '';
+  @State recommendedPrice: string = '';
   @State remark: string = '';
   @State createdAt: string = '';
   @State refreshVersion: number = 0;
+  @State purchasePlatform: string = '';
+  @State shopName: string = '';
 
   async aboutToAppear(): Promise<void> {
     await this.loadPageData();
@@ -51,8 +56,6 @@ struct ProductEditPage {
       await this.loadCategories();
 
       const params: Object = router.getParams();
-      console.info('[ProductEdit] params=' + JSON.stringify(params));
-
       const temp: Record<string, Object> = params as Record<string, Object>;
       const value: Object | undefined = temp['id'];
 
@@ -64,7 +67,6 @@ struct ProductEditPage {
       this.productId = value as string;
 
       const product: Product | undefined = await this.productService.getById(this.productId);
-      console.info('[ProductEdit] product=' + JSON.stringify(product));
 
       if (product === undefined) {
         this.showToast('商品不存在');
@@ -88,9 +90,12 @@ struct ProductEditPage {
     this.name = product.name;
     this.categoryId = product.categoryId;
     this.categoryName = product.categoryName;
+    this.purchasePlatform = product.purchasePlatform;
+    this.shopName = product.shopName;
     this.stockText = product.stockQuantity.toString();
     this.stockUnit = product.stockUnit;
     this.unitPriceText = product.costPrice.toString();
+    this.recommendedPrice = product.recommendedPrice.toString()
     this.remark = product.remark;
     this.createdAt = product.createdAt;
 
@@ -175,7 +180,26 @@ struct ProductEditPage {
       return 0;
     }
 
-    return costPrice * stock;
+    return Number((costPrice * stock).toFixed(2));
+  }
+
+  async pickImage(): Promise<void> {
+    try {
+      const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
+      photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+      photoSelectOptions.maxSelectNumber = 1;
+
+      const photoPicker = new photoAccessHelper.PhotoViewPicker();
+      const result = await photoPicker.select(photoSelectOptions);
+
+      if (result.photoUris.length > 0) {
+        this.imageUri = result.photoUris[0];
+        console.info('[ProductCreate] pick image uri=' + this.imageUri);
+      }
+    } catch (e) {
+      this.showToast('选择图片失败');
+      console.error('[ProductCreate] pick image failed:', e);
+    }
   }
 
   buildProduct(): Product {
@@ -186,11 +210,13 @@ struct ProductEditPage {
     product.imageUri = this.imageUri;
     product.categoryId = this.categoryId;
     product.categoryName = this.categoryName;
+    product.purchasePlatform = this.purchasePlatform.trim();
+    product.shopName = this.shopName.trim();
     product.stockQuantity = Number(this.stockText || '0');
     product.stockUnit = this.stockUnit;
     product.hasStockQuantity = this.stockText.trim().length > 0;
     product.costPrice = Number(this.unitPriceText || '0');
-    product.recommendedPrice = this.getRecommendedPrice(product.costPrice);
+    product.recommendedPrice = Number(this.recommendedPrice || '0');
     product.remark = this.remark.trim();
     product.createdAt = this.createdAt;
 
@@ -243,11 +269,8 @@ struct ProductEditPage {
 
             ImagePickerBox({
               imageUri: $imageUri,
-              onPickImage: () => {
-                this.showToast('图片选择待接入');
-              },
-              onTakePhoto: () => {
-                this.showToast('拍照待接入');
+              onPickImage: async () => {
+                await this.pickImage();
               }
             })
           }
@@ -343,23 +366,72 @@ struct ProductEditPage {
               .fontWeight(FontWeight.Medium)
               .margin({ bottom: 8 })
 
-            TextInput({ placeholder: '请输入成本单价', text: this.unitPriceText })
+            TextInput({
+              placeholder: '请输入成本单价',
+              text: this.unitPriceText
+            })
               .height(48)
-              .type(InputType.Number)
+              .type(InputType.Normal) // 或 InputType.Decimal（如果你的 API 支持）
               .onChange((value: string) => {
-                this.unitPriceText = value;
+                // 最多5位小数
+                const reg = /^\d*(\.\d{0,5})?$/;
+
+                if (reg.test(value) || value === '') {
+                  this.unitPriceText = value;
+                }
               })
+            Text('建议单价 *')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
 
-            Text('建议单价：' + this.getRecommendedPrice(Number(this.unitPriceText || '0')).toString())
-              .fontSize(14)
-              .fontColor('#666666')
-              .margin({ top: 8 })
+            TextInput({
+              placeholder: '请输入建议单价',
+              text: this.recommendedPrice
+            })
+              .height(48)
+              .type(InputType.Normal)
+              .onChange((value: string) => {
+                const reg = /^\d*(\.\d{0,5})?$/;
 
-            Text('成本总价：' + this.getTotalPrice(Number(this.unitPriceText || '0'),Number(this.unitPriceText || '0')))
-              .fontSize(14)
-              .fontColor('#666666')
-              .margin({ top: 8 })
+                if (reg.test(value) || value === '') {
+                  this.recommendedPrice = value;
+                }
+              })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
 
+          Column() {
+            Text('购入平台')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            TextInput({ placeholder: '请输入购入平台', text: this.purchasePlatform })
+              .height(48)
+              .onChange((value: string) => {
+                this.purchasePlatform = value;
+              })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+
+          Column() {
+            Text('店铺名称')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            TextInput({ placeholder: '请输入店铺名称', text: this.shopName })
+              .height(48)
+              .onChange((value: string) => {
+                this.shopName = value;
+              })
           }
           .width('100%')
           .padding(16)

@@ -24,6 +24,7 @@ struct ProductCreatePage {
   @State stockText: string = '';
   @State stockUnit: string = '';
   @State unitPriceText: string = '';
+  @State recommendedPrice: string = '';
   @State remark: string = '';
 
   async aboutToAppear(): Promise<void> {
@@ -298,19 +299,40 @@ struct ProductCreatePage {
               .fontWeight(FontWeight.Medium)
               .margin({ bottom: 8 })
 
-            TextInput({ placeholder: '请输入成本单价', text: this.unitPriceText })
+            TextInput({
+              placeholder: '请输入成本单价',
+              text: this.unitPriceText
+            })
               .height(48)
-              .type(InputType.Number)
+              .type(InputType.Normal) // 或 InputType.Decimal（如果你的 API 支持）
               .onChange((value: string) => {
-                this.unitPriceText = value;
+                // 最多5位小数
+                const reg = /^\d*(\.\d{0,5})?$/;
+
+                if (reg.test(value) || value === '') {
+                  this.unitPriceText = value;
+                }
+              })
+            Text('建议单价 *')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ bottom: 8 })
+
+            TextInput({
+              placeholder: '建议单价：'+this.getRecommendedPrice(Number(this.unitPriceText || '0')).toString()
+            })
+              .height(48)
+              .type(InputType.Normal) // 或 InputType.Decimal（如果你的 API 支持）
+              .onChange((value: string) => {
+                // 最多5位小数
+                const reg = /^\d*(\.\d{0,5})?$/;
+
+                if (reg.test(value) || value === '') {
+                  this.recommendedPrice = value;
+                }
               })
 
-            Text('建议单价：' + this.getRecommendedPrice(Number(this.unitPriceText || '0')).toString())
-              .fontSize(14)
-              .fontColor('#666666')
-              .margin({ top: 8 })
-
-            Text('成本总价：' + this.getTotalPrice(Number(this.unitPriceText || '0'),Number(this.unitPriceText || '0')))
+            Text('成本总价：' + this.getTotalPrice(Number(this.unitPriceText || '0'),Number(this.stockText || '0')))
               .fontSize(14)
               .fontColor('#666666')
               .margin({ top: 8 })

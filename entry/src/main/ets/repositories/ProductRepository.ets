@@ -55,10 +55,13 @@ export class ProductRepository {
       image_uri = ?,
       category_id = ?,
       category_name = ?,
+      purchase_platform = ?,
+      shop_name = ?,
       stock_quantity = ?,
       stock_unit = ?,
       cost_price = ?,
       recommended_price = ?,
+      total_price = ?,
       remark = ?,
       updated_at = ?
     WHERE id = ?
@@ -69,10 +72,13 @@ export class ProductRepository {
       data.imageUri,
       data.categoryId,
       data.categoryName,
+      data.purchasePlatform,
+      data.shopName,
       data.stockQuantity,
       data.stockUnit,
       data.costPrice,
       data.recommendedPrice,
+      data.totalPrice,
       data.remark,
       data.updatedAt,
       data.id
@@ -91,8 +97,8 @@ export class ProductRepository {
 
   async getById(id: string): Promise<Product | undefined> {
     const result = await this.db.querySql(
-      `SELECT id, name, image_uri, category_id, category_name,
-            stock_quantity, stock_unit, cost_price, recommended_price,
+      `SELECT id, name, image_uri, category_id, category_name,purchase_platform,
+      shop_name, stock_quantity, stock_unit, cost_price, recommended_price, total_price,
             remark, created_at, updated_at
      FROM product WHERE id = ?`,
       [id]
@@ -110,21 +116,24 @@ export class ProductRepository {
     item.imageUri = result.getString(2) ?? '';
     item.categoryId = result.getString(3) ?? '';
     item.categoryName = result.getString(4) ?? '';
-    item.stockQuantity = result.getDouble(5) ?? 0;
-    item.stockUnit = result.getString(6) ?? '';
-    item.costPrice = result.getDouble(7) ?? 0;
-    item.recommendedPrice = result.getDouble(8) ?? 0;
-    item.remark = result.getString(9) ?? '';
-    item.createdAt = result.getString(10) ?? '';
-    item.updatedAt = result.getString(11) ?? '';
+    item.purchasePlatform = result.getString(5) ?? '';
+    item.shopName = result.getString(6) ?? '';
+    item.stockQuantity = result.getDouble(7) ?? 0;
+    item.stockUnit = result.getString(8) ?? '';
+    item.costPrice = result.getDouble(9) ?? 0;
+    item.totalPrice = result.getDouble(10) ?? 0;
+    item.recommendedPrice = result.getDouble(11) ?? 0;
+    item.remark = result.getString(12) ?? '';
+    item.createdAt = result.getString(13) ?? '';
+    item.updatedAt = result.getString(14) ?? '';
 
     return item;
   }
 
   async getAll(): Promise<Product[]> {
     const result = await this.db.querySql(
-      `SELECT id, name, image_uri, category_id, category_name,
-            stock_quantity, stock_unit, cost_price, recommended_price,
+      `SELECT id, name, image_uri, category_id, category_name,purchase_platform,
+      shop_name, stock_quantity, stock_unit, cost_price, recommended_price, total_price,
             remark, created_at, updated_at
      FROM product ORDER BY created_at DESC`,
       []
@@ -146,13 +155,16 @@ export class ProductRepository {
       item.imageUri = result.getString(2) ?? '';
       item.categoryId = result.getString(3) ?? '';
       item.categoryName = result.getString(4) ?? '';
-      item.stockQuantity = result.getDouble(5) ?? 0;
-      item.stockUnit = result.getString(6) ?? '';
-      item.costPrice = result.getDouble(7) ?? 0;
-      item.recommendedPrice = result.getDouble(8) ?? 0;
-      item.remark = result.getString(9) ?? '';
-      item.createdAt = result.getString(10) ?? '';
-      item.updatedAt = result.getString(11) ?? '';
+      item.purchasePlatform = result.getString(5) ?? '';
+      item.shopName = result.getString(6) ?? '';
+      item.stockQuantity = result.getDouble(7) ?? 0;
+      item.stockUnit = result.getString(8) ?? '';
+      item.costPrice = result.getDouble(9) ?? 0;
+      item.totalPrice = result.getDouble(10) ?? 0;
+      item.recommendedPrice = result.getDouble(11) ?? 0;
+      item.remark = result.getString(12) ?? '';
+      item.createdAt = result.getString(13) ?? '';
+      item.updatedAt = result.getString(14) ?? '';
 
       list.push(item);
       result.goToNextRow();

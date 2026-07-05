@@ -76,10 +76,13 @@ export class DatabaseManager {
         image_uri TEXT,
         category_id TEXT NOT NULL,
         category_name TEXT NOT NULL,
+        purchase_platform TEXT,
+        shop_name TEXT,
         stock_quantity REAL,
         stock_unit TEXT,
         cost_price REAL,
         recommended_price REAL,
+        total_price REAL,
         remark TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
